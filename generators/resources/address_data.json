@@ -1,0 +1,162 @@
+[
+    {
+        "STREET": "5395 Oak Rd",
+        "POST_CODE1": "85632",
+        "CITY1": "Houston",
+        "REGION": "TX",
+        "COUNTRY": "USA",
+        "LANGU_CORR": "EN"
+    },
+    {
+        "STREET": "6639 Oak Rd",
+        "POST_CODE1": "29638",
+        "CITY1": "Chicago",
+        "REGION": "IL",
+        "COUNTRY": "USA",
+        "LANGU_CORR": "EN"
+    },
+    {
+        "STREET": "8125 Maple Avenue",
+        "POST_CODE1": "98101",
+        "CITY1": "Seattle",
+        "REGION": "WA",
+        "COUNTRY": "USA",
+        "LANGU_CORR": "EN"
+    },
+    {
+        "STREET": "4782 Sunset Blvd",
+        "POST_CODE1": "90028",
+        "CITY1": "Los Angeles",
+        "REGION": "CA",
+        "COUNTRY": "USA",
+        "LANGU_CORR": "EN"
+    },
+    {
+        "STREET": "1600 Broadway",
+        "POST_CODE1": "80202",
+        "CITY1": "Denver",
+        "REGION": "CO",
+        "COUNTRY": "USA",
+        "LANGU_CORR": "EN"
+    },
+    {
+        "STREET": "2515 Yale Blvd SE",
+        "POST_CODE1": "87106",
+        "CITY1": "Albuquerque",
+        "REGION": "NM",
+        "COUNTRY": "USA",
+        "LANGU_CORR": "EN"
+    },
+    {
+        "STREET": "1234 Peachtree St",
+        "POST_CODE1": "30309",
+        "CITY1": "Atlanta",
+        "REGION": "GA",
+        "COUNTRY": "USA",
+        "LANGU_CORR": "EN"
+    },
+    {
+        "STREET": "700 Market St",
+        "POST_CODE1": "63101",
+        "CITY1": "St. Louis",
+        "REGION": "MO",
+        "COUNTRY": "USA",
+        "LANGU_CORR": "EN"
+    },
+    {
+        "STREET": "88 Kearny St",
+        "POST_CODE1": "94108",
+        "CITY1": "San Francisco",
+        "REGION": "CA",
+        "COUNTRY": "USA",
+        "LANGU_CORR": "EN"
+    },
+    {
+        "STREET": "1111 W 6th St",
+        "POST_CODE1": "78703",
+        "CITY1": "Austin",
+        "REGION": "TX",
+        "COUNTRY": "USA",
+        "LANGU_CORR": "EN"
+    },
+    {
+        "STREET": "365 Bloor St E",
+        "POST_CODE1": "M4W 3L4",
+        "CITY1": "Toronto",
+        "REGION": "ON",
+        "COUNTRY": "CANADA",
+        "LANGU_CORR": "EN"
+    },
+    {
+        "STREET": "1000 Rue de la Gaucheti\u00e8re",
+        "POST_CODE1": "H3B 4W5",
+        "CITY1": "Montreal",
+        "REGION": "QC",
+        "COUNTRY": "CANADA",
+        "LANGU_CORR": "FR"
+    },
+    {
+        "STREET": "200 Burrard St",
+        "POST_CODE1": "V6C 3L6",
+        "CITY1": "Vancouver",
+        "REGION": "BC",
+        "COUNTRY": "CANADA",
+        "LANGU_CORR": "EN"
+    },
+    {
+        "STREET": "435 Donald St",
+        "POST_CODE1": "R3B 2H6",
+        "CITY1": "Winnipeg",
+        "REGION": "MB",
+        "COUNTRY": "CANADA",
+        "LANGU_CORR": "EN"
+    },
+    {
+        "STREET": "800 Main St",
+        "POST_CODE1": "E1C 1G1",
+        "CITY1": "Moncton",
+        "REGION": "NB",
+        "COUNTRY": "CANADA",
+        "LANGU_CORR": "EN"
+    },
+    {
+        "STREET": "290 Water St",
+        "POST_CODE1": "A1C 1B7",
+        "CITY1": "St. John's",
+        "REGION": "NL",
+        "COUNTRY": "CANADA",
+        "LANGU_CORR": "EN"
+    },
+    {
+        "STREET": "100 King St",
+        "POST_CODE1": "N2G 1A7",
+        "CITY1": "Kitchener",
+        "REGION": "ON",
+        "COUNTRY": "CANADA",
+        "LANGU_CORR": "EN"
+    },
+    {
+        "STREET": "50 Bay St",
+        "POST_CODE1": "K1N 9J6",
+        "CITY1": "Ottawa",
+        "REGION": "ON",
+        "COUNTRY": "CANADA",
+        "LANGU_CORR": "EN"
+    },
+    {
+        "STREET": "1200 Airport Blvd",
+        "POST_CODE1": "T2E 6W5",
+        "CITY1": "Calgary",
+        "REGION": "AB",
+        "COUNTRY": "CANADA",
+        "LANGU_CORR": "EN"
+    },
+    {
+        "STREET": "1011 3 Ave SW",
+        "POST_CODE1": "T2P 0G1",
+        "CITY1": "Edmonton",
+        "REGION": "AB",
+        "COUNTRY": "CANADA",
+        "LANGU_CORR": "EN"
+    }
+]
