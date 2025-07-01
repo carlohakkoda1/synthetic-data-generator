@@ -3,6 +3,7 @@ import json
 import random
 import re
 from faker import Faker
+import pandas as pd
 
 
 fake = Faker()
@@ -150,3 +151,34 @@ def email_from_name_company(company=None, first_name=None, last_name=None):
     # Email final
     return f"{user_part}@{domain_part}"
 
+
+def lookup_parent_value(table_name: str, fk_column_name, look_up_column, source_value):
+
+    path = os.path.join("output", "vendor", f"{table_name}.csv")
+    if os.path.exists(path):
+        df = pd.read_csv(path)
+        row = df[df[fk_column_name] == source_value] 
+        value = row[look_up_column].iloc[0]
+        return value 
+        
+    else:
+        print(f"[⚠️ WARNING] {path}")
+        return None
+
+
+def get_company_code(table_name: str, fk_column_name, look_up_column, source_value):
+
+    value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value)
+    if value == 'USA':
+        return 1704
+    else:
+        return 2910
+
+
+def get_purchasing_org(table_name: str, fk_column_name, look_up_column, source_value):
+
+    value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value)
+    if value == 'USA':
+        return "US01"
+    else:
+        return "CAO1"

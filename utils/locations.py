@@ -1,7 +1,6 @@
 import json
 import random
 
-# Cargamos el JSON una única vez
 with open("resources/locations.json") as f:
     LOCATIONS = json.load(f)
 
