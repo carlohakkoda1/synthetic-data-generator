@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 
+
 def load_all_schemas(definitions_dir="definitions"):
     schema_dict = {}
 

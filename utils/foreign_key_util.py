@@ -3,7 +3,7 @@ import os
 import random
 from collections import defaultdict
 
-# Cache global para evitar recargar archivos muchas veces
+# Global cache to avoid reloading files multiple times
 _foreign_key_cache = defaultdict(list)
 
 

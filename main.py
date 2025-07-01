@@ -14,7 +14,6 @@ fake = Faker()
 schemas = load_all_schemas("definitions")
 
 
-config_df = pd.read_excel("config/table_config.xlsx")
 
 OUTPUT_DIR = "output"
 
@@ -45,14 +44,6 @@ def generate_table(df_schema, table_name, num_rows, rules_module=None, domain=No
             if pd.isna(rule):
                 value = None
 
-            elif isinstance(rule, str) and rule.strip().startswith("copy("):
-                try:
-                    ref_col = rule[len("copy("):-1].strip()
-                    value = current_row.get(ref_col, "")
-                except Exception as e:
-                    print(f"[⚠️ ERROR copy rule] {col_name}: {rule} -> {e}")
-                    value = ""
-
             elif isinstance(rule, str) and rule.strip().startswith("foreign_key("):
                 try:
                     fk_target = rule[len("foreign_key("):-1].strip()
@@ -75,14 +66,14 @@ def generate_table(df_schema, table_name, num_rows, rules_module=None, domain=No
             elif isinstance(rule, str) and rules_module:
                 try:
                     func_name = rule.split("(")[0]
-                    args_str = rule[len(func_name)+1:-1]  # contenido entre los paréntesis
+                    args_str = rule[len(func_name)+1:-1]  # content inside the parentheses
                     args = []
 
-                    if args_str.strip():  # solo si hay contenido dentro de ()
+                    if args_str.strip():  # only if there's content inside the parentheses
                         for arg in args_str.split(","):
                             arg = arg.strip()
                             if arg.startswith('"') or arg.startswith("'"):
-                                args.append(eval(arg))  # literal string o número
+                                args.append(eval(arg))  # 
                             else:
                                 args.append(current_row.get(arg, ""))
                     
@@ -102,12 +93,15 @@ def generate_table(df_schema, table_name, num_rows, rules_module=None, domain=No
 
 
 def main():
+
+    config_df = pd.read_excel("config/table_config.xlsx")
+    config_df = config_df.sort_values(by="GEN_ORDER")
     for _, row in config_df.iterrows():
         domain = row["DOMAIN"]
         table_name = row["TABLE_NAME"]
         num_rows = int(row["ROWS"])
 
-        print(f"🔧 Generando {num_rows} filas para {domain}.{table_name}")
+        print(f"🔧 Generating {num_rows} rows for {domain}.{table_name}")
 
         rules_module = load_domain_rules(domain)
         df_schema = schemas[domain]
@@ -124,7 +118,7 @@ def main():
             df_data = df_data[ordered_cols]
             
         df_data.to_csv(os.path.join(output_path, f"{table_name}.csv"), index=False)
-        print(f"✅ Guardado: {output_path}/{table_name}.csv")
+        print(f"✅ File saved successfully: {output_path}/{table_name}.csv")
 
 
 if __name__ == "__main__":
