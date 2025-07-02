@@ -166,3 +166,36 @@ def get_purchasing_org(table_name: str, fk_column_name, look_up_column, source_v
         return "US01"
     else:
         return "CAO1"
+    
+
+def get_bank_country(table_name: str, fk_column_name, look_up_column, source_value):
+
+    value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value)
+    if value == 'USA':
+        return "US"
+    else:
+        return "CA"
+    
+def get_account_number(table_name: str, fk_column_name, look_up_column, source_value):
+
+    value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value)
+    if value == 'USA':
+        return fake.bban()
+    else:
+        return fake_ca.bban()
+    
+def get_iban_number(table_name: str, fk_column_name, look_up_column, source_value):
+
+    value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value)
+    if value == 'USA':
+        return fake.iban()
+    else:
+        return fake_ca.iban()
+    
+def get_currency(table_name: str, fk_column_name, look_up_column, source_value):
+
+    value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value)
+    if value == 'USA':
+        return 'USD'
+    else:
+        return 'CAD'
