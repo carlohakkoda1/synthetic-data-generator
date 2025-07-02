@@ -34,13 +34,11 @@ with open(RESOURCE_PATH, "r") as f:
 
 
 def get_street():
-    """Retorna un STREET aleatorio y funciona como valor raíz."""
     address = random.choice(ADDRESS_POOL)
     return address["STREET"]
 
 
 def get_post_code1(street):
-    """Retorna el POST_CODE1 correspondiente al STREET"""
     for addr in ADDRESS_POOL:
         if addr["STREET"] == street:
             return addr["POST_CODE1"]
@@ -79,14 +77,11 @@ def supplier_id_from_name(name: str) -> str:
     if not name:
         return ""
 
-    # Limpiar nombre y quitar caracteres no alfanuméricos
     clean_name = re.sub(r'[^A-Z0-9]', '', name.upper())
 
-    # Prefijo: tomar primeras 3-4 letras o iniciales
     words = re.findall(r'\b[A-Z0-9]', name.upper())
     prefix = ''.join(words)[:4] if len(words) >= 2 else clean_name[:4]
 
-    # Sufijo: a veces se usa número, a veces no
     if random.random() < 0.5:
         suffix = "-" + str(random.randint(1000000, 9999999))
     else:
@@ -96,12 +91,10 @@ def supplier_id_from_name(name: str) -> str:
 
 
 def optional_first_name():
-    # 50% probabilidad de retornar un nombre o None
     return fake.first_name() if random.random() < 0.8312 else None
 
 
 def conditional_last_name(first_name):
-    # Si first_name existe, generar un apellido; si no, dejarlo nulo
     return fake.last_name() if first_name else None
 
 
@@ -119,23 +112,16 @@ def phone_by_country(country):
         return None
     
 def clean_string(s):
-    """Remueve caracteres especiales y pone en minúscula"""
     return re.sub(r'[^a-zA-Z0-9]', '', s or "").lower()
 
 def email_from_name_company(company=None, first_name=None, last_name=None):
-    """
-    Genera un email en el formato user.name@company.com con 74.6% de probabilidad de ser None.
-    Usa los campos disponibles: first_name, last_name, company.
-    """
     if random.random() < 0.746:
         return None
 
-    # Limpiar y preparar los inputs
     company = clean_string(company)
     first_name = clean_string(first_name)
     last_name = clean_string(last_name)
 
-    # Generar parte del username
     if first_name and last_name:
         user_part = f"{first_name}.{last_name}"
     elif first_name:
@@ -145,10 +131,8 @@ def email_from_name_company(company=None, first_name=None, last_name=None):
     else:
         user_part = fake.user_name()
 
-    # Dominio
     domain_part = f"{company}.com" if company else fake.free_email_domain()
 
-    # Email final
     return f"{user_part}@{domain_part}"
 
 
@@ -182,3 +166,36 @@ def get_purchasing_org(table_name: str, fk_column_name, look_up_column, source_v
         return "US01"
     else:
         return "CAO1"
+    
+
+def get_bank_country(table_name: str, fk_column_name, look_up_column, source_value):
+
+    value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value)
+    if value == 'USA':
+        return "US"
+    else:
+        return "CA"
+    
+def get_account_number(table_name: str, fk_column_name, look_up_column, source_value):
+
+    value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value)
+    if value == 'USA':
+        return fake.bban()
+    else:
+        return fake_ca.bban()
+    
+def get_iban_number(table_name: str, fk_column_name, look_up_column, source_value):
+
+    value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value)
+    if value == 'USA':
+        return fake.iban()
+    else:
+        return fake_ca.iban()
+    
+def get_currency(table_name: str, fk_column_name, look_up_column, source_value):
+
+    value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value)
+    if value == 'USA':
+        return 'USD'
+    else:
+        return 'CAD'
