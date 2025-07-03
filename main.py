@@ -96,6 +96,8 @@ def main():
 
     config_df = pd.read_excel("config/table_config.xlsx")
     config_df = config_df.sort_values(by="GEN_ORDER")
+    print(config_df)
+
     for _, row in config_df.iterrows():
         domain = row["DOMAIN"]
         table_name = row["TABLE_NAME"]
