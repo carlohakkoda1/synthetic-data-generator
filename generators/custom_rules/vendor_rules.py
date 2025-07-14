@@ -4,10 +4,13 @@ import random
 import re
 from faker import Faker
 import pandas as pd
+import string
 
 
 fake = Faker()
 fake_ca = Faker("en_CA")
+_lifnr_counter = 0  # Global counter to keep track of generated LIFNRs for YN01
+
 
 
 def supplier_code(name):
@@ -22,6 +25,10 @@ def copy_value(source_value):
 
 def random_code():
     return random.choice(["YNO1"])
+
+
+def get_random_partner_function():
+    return random.choice(["RS", "WL", "LF", "BA"])
 
 
 def default(value):
@@ -199,3 +206,100 @@ def get_currency(table_name: str, fk_column_name, look_up_column, source_value):
         return 'USD'
     else:
         return 'CAD'
+
+
+def get_reconciliation_account(table_name: str, fk_column_name, look_up_column, source_value):
+
+    value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value)
+    if value == 'USA':
+        return 21100000
+    else:
+        return 21300000
+    
+
+def generate_bank_key(country_bank):
+    """
+    Returns a random BANKL (Bank Key) for USA or CANADA.
+    """
+    usa_bank_keys = [
+        "021000021", "026009593", "121000248", "021000089", "091000022"
+    ]
+    canada_bank_keys = [
+        "0001004", "0040012", "0020020", "0010005", "0100063"
+    ]
+    country_bank = country_bank.strip().upper()
+    if country_bank == "US":
+        return random.choice(usa_bank_keys)
+    elif country_bank == "CA":
+        return random.choice(canada_bank_keys)
+    else:
+        print(f"[⚠️ WARNING] {path}")
+        return None
+    
+def generate_bkont(country_bank):
+    """
+    Returns a random BKONT (Bank Control Key) for USA or CANADA.
+    """
+    usa_bkont_values = ["01", "02", "03"]  # Checking, Savings, Loan
+    canada_bkont_values = ["01", "02", "03", "04", "05"]
+    country_bank = country_bank.strip().upper()
+    if country_bank == "US":
+        return random.choice(usa_bkont_values)
+    elif country_bank == "CA":
+        return random.choice(canada_bkont_values)
+    else:
+        return 2910
+
+def generate_bkref(country_bank):
+    """
+    Returns a random BKREF (Bank Reference) for USA or CANADA.
+    """
+    country_bank = country_bank.strip().upper()
+    if country_bank == "US":
+        prefix = "REF-"
+        random_part = ''.join(random.choices(string.digits, k=6))
+        return f"{prefix}{random_part}"
+    elif country_bank == "CA":
+        prefix = "PAYID-"
+        random_part = ''.join(random.choices(string.digits, k=5))
+        return f"{prefix}{random_part}"
+    else:
+        return "CAO1"
+    
+
+def random_tax_type(ctx=None):
+    """Randomly assigns a Tax Type (SAP field)."""
+    return random.choice(['X', ''])
+
+def generate_tax_number():
+    """
+    Returns a random tax number for USA (EIN) or CANADA (BN).
+    """
+    country_code = random.choice(["US", "CA"])
+    country_code = country_code.strip().upper()
+    if country_code == "US":
+        # EIN: ##-####### (e.g., 82-3894710)
+        first_part = ''.join(random.choices("0123456789", k=2))
+        second_part = ''.join(random.choices("0123456789", k=7))
+        return f"{first_part}-{second_part}"
+    elif country_code == "CA":
+        # BN: #########RT#### (e.g., 342601701RT8476)
+        base_number = ''.join(random.choices("0123456789", k=9))
+        suffix = "RT" + ''.join(random.choices("0123456789", k=4))
+        return f"{base_number}{suffix}"
+    else:
+        return "CA"
+
+
+def generate_lifnr_yn01() -> int:
+    global _lifnr_counter
+    start_range = 300000000
+    end_range = 399999999
+
+    lifnr = start_range + _lifnr_counter
+    if lifnr > end_range:
+        raise ValueError("Exceeded YN01 number range (300000000 - 399999999)")
+
+    _lifnr_counter += 1  # Increment for the next call
+    result = str(lifnr).zfill(9)
+    return result
