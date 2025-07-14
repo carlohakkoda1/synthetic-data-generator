@@ -1,27 +1,28 @@
 import os
-from faker import Faker
+import random
 import importlib
 import pandas as pd
+from faker import Faker
+
 from utils.schema_loader import load_all_schemas
 from generators.base_rules import get_generator
 from utils.logger import log_table_structure
 from utils.foreign_key_util import get_foreign_values
-import random
 
-
+# === GLOBALS ===
 fake = Faker()
+OUTPUT_DIR = "output"
 
+# === LOAD SCHEMAS ONCE ===
 schemas = load_all_schemas("definitions")
 
 
-
-OUTPUT_DIR = "output"
-
-
 def load_domain_rules(domain):
+    """
+    Dynamically loads a Python module for domain-specific rules if available.
+    """
     try:
-        module = importlib.import_module(
-            f"generators.custom_rules.{domain}_rules")
+        module = importlib.import_module(f"generators.custom_rules.{domain}_rules")
         return module
     except ModuleNotFoundError:
         print(f"[⚠️ WARNING] No custom rules found for domain: {domain}")
@@ -29,6 +30,10 @@ def load_domain_rules(domain):
 
 
 def generate_table(df_schema, table_name, num_rows, rules_module=None, domain=None):
+    """
+    Generates synthetic data for a given table using its schema definition and rules.
+    Handles foreign keys, faker functions, and custom rules.
+    """
     df_table = df_schema[df_schema["TABLE_NAME"] == table_name]
     data = {col["COLUMN_NAME"]: [] for _, col in df_table.iterrows()}
 
@@ -41,9 +46,13 @@ def generate_table(df_schema, table_name, num_rows, rules_module=None, domain=No
             length = int(col["LENGTH"])
             rule = col.get("FAKE_RULE", None)
 
+            value = None  # Default value
+
+            # --- Rule type: None ---
             if pd.isna(rule):
                 value = None
 
+            # --- Rule type: Foreign Key ---
             elif isinstance(rule, str) and rule.strip().startswith("foreign_key("):
                 try:
                     fk_target = rule[len("foreign_key("):-1].strip()
@@ -55,6 +64,7 @@ def generate_table(df_schema, table_name, num_rows, rules_module=None, domain=No
                     print(f"[⚠️ ERROR foreign key] {col_name}: {rule} -> {e}")
                     value = ""
 
+            # --- Rule type: Faker ---
             elif isinstance(rule, str) and rule.strip().startswith("faker."):
                 try:
                     func_call = rule.strip()[6:]
@@ -63,24 +73,25 @@ def generate_table(df_schema, table_name, num_rows, rules_module=None, domain=No
                     print(f"[⚠️ ERROR faker] {col_name}: {rule} -> {e}")
                     value = ""
 
+            # --- Rule type: Custom Rule in Module ---
             elif isinstance(rule, str) and rules_module:
                 try:
                     func_name = rule.split("(")[0]
-                    args_str = rule[len(func_name)+1:-1]  # content inside the parentheses
+                    args_str = rule[len(func_name)+1:-1]
                     args = []
-
-                    if args_str.strip():  # only if there's content inside the parentheses
+                    if args_str.strip():
                         for arg in args_str.split(","):
                             arg = arg.strip()
                             if arg.startswith('"') or arg.startswith("'"):
-                                args.append(eval(arg))  # 
+                                args.append(eval(arg))
                             else:
                                 args.append(current_row.get(arg, ""))
-                    
                     value = getattr(rules_module, func_name)(*args)
                 except Exception as e:
                     print(f"[⚠️ ERROR custom rule] {col_name}: {rule} -> {e}")
                     value = ""
+
+            # --- Fallback: Default Generator by Type ---
             else:
                 value = get_generator(col_type, length)()
 
@@ -93,9 +104,12 @@ def generate_table(df_schema, table_name, num_rows, rules_module=None, domain=No
 
 
 def main():
-
+    """
+    Main driver: loads table config, iterates by generation order, applies rules, saves output.
+    """
     config_df = pd.read_excel("config/table_config.xlsx")
     config_df = config_df.sort_values(by="GEN_ORDER")
+
     print(config_df)
 
     for _, row in config_df.iterrows():
@@ -107,18 +121,19 @@ def main():
 
         rules_module = load_domain_rules(domain)
         df_schema = schemas[domain]
-        log_table_structure(df_schema[df_schema["TABLE_NAME"
-                                                ] == table_name], rules_module)
+        log_table_structure(df_schema[df_schema["TABLE_NAME"] == table_name], rules_module)
+
         df_data = generate_table(df_schema, table_name, num_rows, rules_module, domain)
 
         output_path = os.path.join(OUTPUT_DIR, domain)
         os.makedirs(output_path, exist_ok=True)
 
+        # Optional column order
         column_order = row.get("COLUMN_ORDER")
         if pd.notna(column_order):
             ordered_cols = [col.strip() for col in column_order.split(",")]
             df_data = df_data[ordered_cols]
-            
+
         df_data.to_csv(os.path.join(output_path, f"{table_name}.csv"), index=False)
         print(f"✅ File saved successfully: {output_path}/{table_name}.csv")
 
