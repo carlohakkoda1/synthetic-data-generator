@@ -18,7 +18,11 @@ RESOURCE_PATH = os.path.join(os.path.dirname(__file__), "../resources/address_da
 with open(RESOURCE_PATH, "r") as f:
     ADDRESS_POOL = json.load(f)
 
-# === GENERATION FUNCTIONS ===
+# --- CACHE para acceso rápido por STREET ---
+STREET_LOOKUP = {addr["STREET"]: addr for addr in ADDRESS_POOL}
+
+# --- CACHE para lookups de parent (tabla, columna clave) ---
+_lookup_cache = {}
 
 def supplier_code(name: str) -> str:
     """Generates a supplier code using the name and random digits."""
@@ -42,47 +46,31 @@ def default(value):
     """Returns the value as is."""
     return value
 
-# === ADDRESS RELATED ===
+# === ADDRESS RELATED (Optimized) ===
 
 def get_street():
     """Returns a random street from address pool."""
-    address = random.choice(ADDRESS_POOL)
-    return address["STREET"]
+    return random.choice(list(STREET_LOOKUP.keys()))
 
 def get_post_code1(street):
     """Returns the postal code for a given street."""
-    for addr in ADDRESS_POOL:
-        if addr["STREET"] == street:
-            return addr["POST_CODE1"]
-    return ""
+    return STREET_LOOKUP.get(street, {}).get("POST_CODE1", "")
 
 def get_city1(street):
     """Returns the city for a given street."""
-    for addr in ADDRESS_POOL:
-        if addr["STREET"] == street:
-            return addr["CITY1"]
-    return ""
+    return STREET_LOOKUP.get(street, {}).get("CITY1", "")
 
 def get_country(street):
     """Returns the country for a given street."""
-    for addr in ADDRESS_POOL:
-        if addr["STREET"] == street:
-            return addr["COUNTRY"]
-    return ""
+    return STREET_LOOKUP.get(street, {}).get("COUNTRY", "")
 
 def get_region(street):
     """Returns the region for a given street."""
-    for addr in ADDRESS_POOL:
-        if addr["STREET"] == street:
-            return addr["REGION"]
-    return ""
+    return STREET_LOOKUP.get(street, {}).get("REGION", "")
 
 def get_langu_corr(street):
     """Returns the language code for a given street."""
-    for addr in ADDRESS_POOL:
-        if addr["STREET"] == street:
-            return addr["LANGU_CORR"]
-    return ""
+    return STREET_LOOKUP.get(street, {}).get("LANGU_CORR", "")
 
 # === SUPPLIER NAME-BASED ===
 
@@ -144,59 +132,63 @@ def email_from_name_company(company=None, first_name=None, last_name=None):
     domain_part = f"{company}.com" if company else fake.free_email_domain()
     return f"{user_part}@{domain_part}"
 
-# === LOOKUPS (PARENT/CHILD DATA) ===
+# === LOOKUPS (PARENT/CHILD DATA, OPTIMIZED) ===
 
-def lookup_parent_value(table_name: str, fk_column_name, look_up_column, source_value):
-    """Looks up a value in parent table CSV based on a FK."""
-    path = os.path.join("output", "vendor", f"{table_name}.csv")
-    if os.path.exists(path):
+def get_lookup_map(table_name, fk_column_name, domain="vendor"):
+    """
+    Crea y cachea un dict: {fk_value: row_dict} para accesso O(1).
+    """
+    key = f"{domain}.{table_name}.{fk_column_name}"
+    if key not in _lookup_cache:
+        path = os.path.join("output", domain, f"{table_name}.csv")
+        if not os.path.exists(path):
+            print(f"[⚠️ WARNING] {path} not found")
+            _lookup_cache[key] = {}
+            return _lookup_cache[key]
         df = pd.read_csv(path)
-        row = df[df[fk_column_name] == source_value]
-        if not row.empty:
-            value = row[look_up_column].iloc[0]
-            return value
-        else:
-            print(f"[⚠️ WARNING] No match for value {source_value} in {table_name}")
-            return None
+        # OJO: Puede haber duplicados, siempre toma la PRIMERA aparición
+        _lookup_cache[key] = {row[fk_column_name]: row for _, row in df.iterrows()}
+    return _lookup_cache[key]
+
+def lookup_parent_value(table_name: str, fk_column_name, look_up_column, source_value, domain="vendor"):
+    """
+    Usar un dict en memoria para acceso O(1).
+    """
+    lookup_map = get_lookup_map(table_name, fk_column_name, domain)
+    row = lookup_map.get(source_value)
+    if row is not None and look_up_column in row:
+        return row[look_up_column]
     else:
-        print(f"[⚠️ WARNING] File not found: {path}")
         return None
 
 # === BUSINESS RULES (COMPANY, BANK, TAX, ETC) ===
 
-def get_company_code(table_name: str, fk_column_name, look_up_column, source_value):
-    """Returns company code based on parent value."""
-    value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value)
+def get_company_code(table_name: str, fk_column_name, look_up_column, source_value, domain="vendor"):
+    value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value, domain)
     return 1704 if value == 'USA' else 2910
 
-def get_purchasing_org(table_name: str, fk_column_name, look_up_column, source_value):
-    """Returns purchasing org code based on parent value."""
-    value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value)
+def get_purchasing_org(table_name: str, fk_column_name, look_up_column, source_value, domain="vendor"):
+    value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value, domain)
     return "US01" if value == 'USA' else "CAO1"
 
-def get_bank_country(table_name: str, fk_column_name, look_up_column, source_value):
-    """Returns bank country code based on parent value."""
-    value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value)
+def get_bank_country(table_name: str, fk_column_name, look_up_column, source_value, domain="vendor"):
+    value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value, domain)
     return "US" if value == 'USA' else "CA"
 
-def get_account_number(table_name: str, fk_column_name, look_up_column, source_value):
-    """Returns a BBAN based on parent value."""
-    value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value)
+def get_account_number(table_name: str, fk_column_name, look_up_column, source_value, domain="vendor"):
+    value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value, domain)
     return fake.bban() if value == 'USA' else fake_ca.bban()
 
-def get_iban_number(table_name: str, fk_column_name, look_up_column, source_value):
-    """Returns an IBAN based on parent value."""
-    value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value)
+def get_iban_number(table_name: str, fk_column_name, look_up_column, source_value, domain="vendor"):
+    value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value, domain)
     return fake.iban() if value == 'USA' else fake_ca.iban()
 
-def get_currency(table_name: str, fk_column_name, look_up_column, source_value):
-    """Returns currency code based on parent value."""
-    value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value)
+def get_currency(table_name: str, fk_column_name, look_up_column, source_value, domain="vendor"):
+    value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value, domain)
     return 'USD' if value == 'USA' else 'CAD'
 
-def get_reconciliation_account(table_name: str, fk_column_name, look_up_column, source_value):
-    """Returns GL account based on parent value."""
-    value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value)
+def get_reconciliation_account(table_name: str, fk_column_name, look_up_column, source_value, domain="vendor"):
+    value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value, domain)
     return 21100000 if value == 'USA' else 21300000
 
 def generate_bank_key(country_bank):
