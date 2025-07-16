@@ -46,19 +46,6 @@ def generate_table(df_schema, table_name, num_rows, rules_module=None, domain=No
             if pd.isna(rule):
                 value = None
 
-            elif isinstance(rule, str) and rule.strip().startswith("foreign_key("):
-                t0 = time.perf_counter()
-                try:
-                    fk_target = rule[len("foreign_key("):-1].strip()
-                    target_table, target_col = fk_target.split(".")
-                    target_path = os.path.join(OUTPUT_DIR, domain, f"{target_table}.csv")
-                    candidates = get_foreign_values(target_path, target_col)
-                    value = random.choice(candidates) if candidates else ""
-                except Exception as e:
-                    print(f"[⚠️ ERROR foreign key] {col_name}: {rule} -> {e}")
-                    value = ""
-                fk_times.append(time.perf_counter() - t0)
-
             elif isinstance(rule, str) and rule.strip().startswith("faker."):
                 t0 = time.perf_counter()
                 try:
