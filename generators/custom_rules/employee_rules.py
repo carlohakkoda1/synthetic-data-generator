@@ -4,16 +4,12 @@ from utils.foreign_key_util import get_foreign_values
 from datetime import datetime, timedelta
 import pandas as pd
 import json
+from collections import defaultdict
 
 
 
 OUTPUT_DIR = "output"
 DOMAIN = "employee"  # o el que corresponda a ese archivo de reglas
-
-person_start_dates = {}  # Diccionario: {person_id: [start_date1, start_date2, ...]}
-_lookup_cache = {}
-
-_column_iterators_copy = {}
 
 def generate_person_number():
     """
@@ -65,42 +61,6 @@ def generate_person_number():
 def default(value):
     """Returns the value as is."""
     return value
-
-
-def foreign_key(table_name, column_name):
-    """
-    Devuelve un valor aleatorio válido de la tabla/columna FK generada en este dominio.
-    """
-    target_path = os.path.join(OUTPUT_DIR, DOMAIN, f"{table_name}.csv")
-    candidates = get_foreign_values(target_path, column_name)
-    if not candidates:
-        value = ""
-    else:
-        value = random.choice(candidates)  # O puedes usar otro método de selección si gustas
-    return value
-
-
-def generate_start_date(person_id, min_date='2017-01-01', max_date='2025-06-01'):
-
-    fmt = '%Y-%m-%d'
-    start = datetime.strptime(min_date, fmt)
-    end = datetime.strptime(max_date, fmt)
-    days_range = (end - start).days
-    random_days = random.randint(0, days_range)
-    random_date = start + timedelta(days=random_days)
-    start_date = random_date.strftime(fmt)
-
-    if person_id not in person_start_dates:
-        person_start_dates[person_id] = []
-    person_start_dates[person_id].append(start_date)
-
-
-    return start_date
-
-
-def generate_end_date(person_id, start_date):
-    #print(person_start_dates)
-    return '4712-12-31'
 
 
 _lookup_cache = {}
@@ -410,3 +370,99 @@ def get_Organizational_Unit(company_code):
         return '50000000'
     else:
         return '50000001'
+    
+    
+ # === GLOBAL CACHES ===
+_pk_cache = defaultdict(list)        # Guarda los valores únicos de cada tabla/columna
+_pk_generator = defaultdict(list)    # Trackea cuántas veces se ha usado cada valor
+
+
+def foreign_key_test(table_name, column_name):
+    key = f"{table_name}.{column_name}"
+
+    if key not in _pk_cache:
+        target_path = os.path.join(OUTPUT_DIR, DOMAIN, f"{table_name}.csv")
+        _pk_cache[key] = get_foreign_values(target_path, column_name)
+
+    if not _pk_cache[key]:
+        print(f"[⚠️ WARNING] No hay valores en _pk_cache para {key}")
+        return ""
+
+    attempts = 0
+    max_attempts = len(_pk_cache[key]) * 2
+    while attempts < max_attempts:
+        value = str(random.choice(_pk_cache[key]))
+        gen_key = f"{key}.{value}"
+        count = len(_pk_generator[gen_key])
+        if count < 2:
+            _pk_generator[gen_key].append(value)
+            return value
+        attempts += 1
+
+    # ♻️ Reset contador y vuelve a intentar
+    print(f"[♻️ RESET] Reiniciando contador para {key}")
+    keys_to_reset = [k for k in _pk_generator if k.startswith(f"{key}.")]
+    for k in keys_to_reset:
+        del _pk_generator[k]
+
+    # Ahora elegir un nuevo valor limpio
+    value = str(random.choice(_pk_cache[key]))
+    _pk_generator[f"{key}.{value}"].append(value)
+    return value
+
+
+person_end_dates = {} 
+person_start_dates = {}  # Diccionario: {person_id: [start_date1, start_date2, ...]}
+
+
+def generate_end_date_test(person_id):
+
+    if person_id not in person_start_dates:
+        person_end_dates[person_id] = []
+        person_end_dates[person_id].append('4712-12-31') #active
+        return '4712-12-31'
+    else:
+        date = datetime.strptime(person_start_dates[person_id][0], "%Y-%m-%d")
+        date = date - timedelta(days=1)
+        date = date.strftime("%Y-%m-%d")
+        person_end_dates[person_id].append(date) #inactive
+        return date
+
+
+
+def generate_start_date_test(person_id):
+
+    if person_id not in person_start_dates:
+        person_start_dates[person_id] = []
+        start_date = random_date_between()
+        person_start_dates[person_id].append(start_date) #active
+        return start_date
+    else:
+        end_date = datetime.strptime(person_end_dates[person_id][1], "%Y-%m-%d")
+        end_date_str = end_date.strftime("%Y-%m-%d")
+        start_date = random_date_between(max_date=end_date_str) #inactive
+        return start_date
+
+
+
+def random_date_between(min_date='2017-01-01',  max_date='2025-06-01', fmt='%Y-%m-%d'):
+    """
+    Genera una fecha aleatoria entre min_date y max_date.
+
+    Args:
+        min_date (str): Fecha mínima en formato string (ej. '2020-01-01').
+        max_date (str): Fecha máxima en formato string (ej. '2023-12-31').
+        fmt (str): Formato de las fechas (default '%Y-%m-%d').
+
+    Returns:
+        str: Fecha aleatoria como string en el formato especificado.
+    """
+    start = datetime.strptime(min_date, fmt)
+    end = datetime.strptime(max_date, fmt)
+    days_range = (end - start).days
+    random_days = random.randint(0, days_range)
+    random_date = start + timedelta(days=random_days)
+    return random_date.strftime(fmt)
+
+
+
