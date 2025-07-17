@@ -4,6 +4,8 @@ import importlib
 import pandas as pd
 from faker import Faker
 import time
+import inspect
+
 
 from utils.schema_loader import load_all_schemas
 from generators.base_rules import get_generator
@@ -31,7 +33,7 @@ def generate_table(df_schema, table_name, num_rows, rules_module=None, domain=No
     custom_times = []
     gen_times = []
 
-    for _ in range(num_rows):
+    for row in range(num_rows):
         current_row = {}
 
         row_start = time.perf_counter()
@@ -69,7 +71,15 @@ def generate_table(df_schema, table_name, num_rows, rules_module=None, domain=No
                                 args.append(eval(arg))
                             else:
                                 args.append(current_row.get(arg, ""))
-                    value = getattr(rules_module, func_name)(*args)
+                    func = getattr(rules_module, func_name)
+
+                    # ✅ Pasar row solo si la función lo acepta
+                    sig = inspect.signature(func)
+                    if 'row_nums' in sig.parameters:
+                        value = func(*args, row_nums=row)
+                    else:
+                        value = func(*args)
+
                 except Exception as e:
                     print(f"[⚠️ ERROR custom rule] {col_name}: {rule} -> {e}")
                     value = ""
