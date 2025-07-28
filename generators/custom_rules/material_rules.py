@@ -3,6 +3,8 @@ import string
 import os
 from datetime import datetime
 import pandas as pd
+import numpy as np
+import json
 from utils.foreign_key_util import get_foreign_values
 
 
@@ -262,3 +264,81 @@ def get_currency(table_name: str, fk_column_name, look_up_column, source_value):
     else:
         return ''
 
+
+def get_product_group(v_material_type):
+    if v_material_type == 'HAWA' or v_material_type == 'FERT':
+        return random.choice(["43233410", "43212110", "44103101", "44103107",
+                            "44103108", "44103109", "44103004",
+                            "44103125", "44103110", "44101728", "44103121", "44122107",
+                            "44103127", "44103104", "44103120"])
+    elif v_material_type == 'DIEN':
+        return '81112306'
+    else:
+        return ''
+
+def generate_gross_weight():
+    # Adjust mean and sigma to get a similar shape
+    mean = 0  # Try with 0, tune as needed
+    sigma = 1  # Start with 1, lower for tighter spread, higher for more spread
+    weight = np.random.lognormal(mean, sigma)
+    # Optional: Clip to your observed min/max range to avoid crazy outliers
+    return min(max(weight, 0.05), 50.0)
+
+
+def copy_value_from_column(source_v):
+    return source_v
+
+
+def generate_length():
+    return round(np.random.lognormal(2.5, 0.25), 2)
+
+def generate_width():
+    return round(np.random.lognormal(2.0, 0.25), 2)
+
+def generate_height():
+    return round(np.random.lognormal(1.7, 0.25), 2)
+
+def generate_volume(length, width, height):
+    return round(length * width * height, 2)
+
+def generate_weight():
+    # Example: lognormal parameters for weight; tune as needed
+    return round(np.random.lognormal(-0.2, 0.5), 2)
+
+def assign_random_mrp_controller():
+    return random.choice([
+    "U0V1", "6XCL", "EQ05", "C0Y1", "B1X0",
+    "D2F1", "B2T0", "C0X1", "B1J1", "D2C1",
+    "B1Y0", "1A1A", "C0U1", "B1F1", "A3R0"
+    ])
+
+
+def assing_country_origin(source_value):
+    if source_value == 'US32':
+        return 'US'
+    else:
+        return 'CA'
+
+
+def generate_wzeit_replenishment_simple():
+    return random.randint(7, 30)
+
+def generate_plifz_simple():
+    return random.randint(7, 60)
+
+def generate_webaz_simple():
+    return random.randint(2, 14)
+
+
+
+RESOURCE_PATH_SAP = os.path.join(os.path.dirname(__file__), "../resources/product_descriptions.json")
+
+with open(RESOURCE_PATH_SAP, "r") as f:
+    SAP_PRODUCT_DESCRIPTION_POOL = json.load(f)
+
+PRODUCT_DESCRIPTION_LOOKUP = {product["DESCRIPTION"]: product for product in SAP_PRODUCT_DESCRIPTION_POOL}
+
+
+def get_product_description():
+    """Returns a random Person ID (Initials) from the SAP dummy data pool."""
+    return random.choice(list(PRODUCT_DESCRIPTION_LOOKUP.keys()))
