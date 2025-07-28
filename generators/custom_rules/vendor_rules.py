@@ -5,6 +5,8 @@ import re
 import string
 from faker import Faker
 import pandas as pd
+from collections import defaultdict
+from utils.foreign_key_util import get_foreign_values
 
 # === FAKER INSTANCES ===
 fake = Faker()
@@ -243,6 +245,11 @@ def generate_tax_number():
     else:
         return None
 
+
+vendor_number_set = set()
+vendor_number_fk_sddr_usage = set()
+
+
 def generate_lifnr_yn01() -> str:
     """Sequentially generates LIFNR values in range 300000000 - 399999999."""
     global _LIFNR_COUNTER
@@ -252,4 +259,69 @@ def generate_lifnr_yn01() -> str:
     if lifnr > end_range:
         raise ValueError("Exceeded YN01 number range (300000000 - 399999999)")
     _LIFNR_COUNTER += 1
+    vendor_number = str(lifnr).zfill(9)
+    if vendor_number not in vendor_number_set:
+        vendor_number_set.add(vendor_number)
+        return vendor_number
+
     return str(lifnr).zfill(9)
+
+
+def fk_copy():
+    for vendor_id in vendor_number_set:
+        if vendor_id not in vendor_number_fk_sddr_usage:
+            vendor_number_fk_sddr_usage.add(vendor_id)
+            return vendor_id
+
+
+def generate_dic(column_name, value):
+    return {column_name: value}
+
+
+_pk_cache = defaultdict(list)     
+_pk_generator = defaultdict(list)    # Trackea cuántas veces se ha usado cada valor
+_row_generator_cache = {}
+
+
+OUTPUT_DIR = "output"
+DOMAIN = "vendor"  # o el que corresponda a ese archivo de reglas
+
+
+def foreign_key(table_name, column_name, row_nums=None):
+    row_num = row_nums
+
+    key = f"{table_name}.{column_name}"
+
+    if key not in _pk_cache:
+        target_path = os.path.join(OUTPUT_DIR, DOMAIN, f"{table_name}.csv")
+        _pk_cache[key] = get_foreign_values(target_path, column_name)
+
+    if not _pk_cache[key]:
+        print(f"[⚠️ WARNING] No hay valores en _pk_cache para {key}")
+        return ""
+
+    attempts = 0
+    max_attempts = len(_pk_cache[key]) * 2
+    while attempts < max_attempts:
+        value = str(random.choice(_pk_cache[key]))
+        gen_key = f"{key}.{value}"
+        count = len(_pk_generator[gen_key])
+        if count < 2:
+            _pk_generator[gen_key].append(value)
+            _row_generator_cache[row_num] = generate_dic(column_name, value)
+            row_num += 1 
+            return value
+        attempts += 1
+
+    # ♻️ Reset contador y vuelve a intentar
+    print(f"[♻️ RESET] Reiniciando contador para {key}")
+    keys_to_reset = [k for k in _pk_generator if k.startswith(f"{key}.")]
+    for k in keys_to_reset:
+        del _pk_generator[k]
+
+    # Ahora elegir un nuevo valor limpio
+    value = str(random.choice(_pk_cache[key]))
+    _pk_generator[f"{key}.{value}"].append(value)
+    _row_generator_cache[row_num] = generate_dic(column_name, value)
+    row_num += 1  
+    return value

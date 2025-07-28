@@ -2,12 +2,15 @@ import os
 import json
 import random
 import pandas as pd
+from faker import Faker
 from datetime import datetime, timedelta
 from collections import defaultdict
 from utils.foreign_key_util import get_foreign_values
 
 OUTPUT_DIR = "output"
 DOMAIN = "employee"
+
+
 
 row_num = 0
 person_end_dates = {} 
@@ -25,6 +28,35 @@ def default(value):
     return value
 
 # === PERSON_NUMBER ===
+
+
+person_number_set = set()
+fake = Faker()
+
+
+def person_number():
+    """Generates a unique synthetic PERSON_NUMBER similar to your data sample."""
+    # Definir patrones y probabilidades
+    patterns = [
+        ("USG#####", 0.12),      # Ejemplo: USG54208
+        ("USX#####", 0.12),      # Ejemplo: USX18000
+        ("USWL####", 0.08),      # Ejemplo: USWL1234
+        ("CA######", 0.10),      # Ejemplo: CA065870
+        ("US######", 0.11),      # Ejemplo: US123456
+        ("USWU#####", 0.10),     # Ejemplo: USWU1234
+        ("50######", 0.37),      # Ejemplo: 50554793
+    ]
+
+    # Preparar listas para random.choices
+    pattern_list = [pat for pat, _ in patterns]
+    weights = [w for _, w in patterns]
+
+    while True:
+        pattern = random.choices(pattern_list, weights=weights, k=1)[0]
+        person_num = fake.bothify(pattern).upper()
+        if person_num not in person_number_set:
+            person_number_set.add(person_num)
+            return person_num
 
 
 def generate_person_number():

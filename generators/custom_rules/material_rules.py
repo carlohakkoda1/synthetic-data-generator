@@ -100,6 +100,7 @@ def get_datetime():
     return _datetime_value
 
 
+
 def fk_copy(table_name):
 
     if table_name == 'S_MAKT':
