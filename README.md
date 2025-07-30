@@ -36,10 +36,59 @@ This library generates realistic synthetic data for SAP S/4HANA migration mock-l
 
 ## 3. Prerequisites
 
+Before you can run the Synthetic Data Generator, make sure you have the following in place:
+
 1. **Python**  
    - Version **3.8** or newer  
+   - Verify with:  
+     ```bash
+     python --version
+     ```
 
-2. **Python Packages**  
-   Install all dependencies with:
-   ```bash
-   pip install -r requirements.txt
+2. **Dependencies**  
+   - All third-party packages are listed in `requirements.txt`.  
+   - Install them with:
+     ```bash
+     pip install -r requirements.txt
+     ```  
+
+3. **Project Files & Folders**  
+   Ensure your project root contains the following structure and files:
+
+.
+├── config/
+│   ├── table_config.xlsx
+│   └── table_config_copy.xlsx
+├── core/
+│   ├── data_generator.py
+│   ├── domain_utils.py
+│   ├── foreign_key_util.py
+│   └── schema_loader.py
+├── definitions/
+│   ├── base_rules.py
+│   ├── customer.xlsx
+│   ├── employee.xlsx
+│   ├── equipment.xlsx
+│   ├── material.xlsx
+│   ├── vendor.xlsx
+│   └── custom_rules/
+│       ├── customer_rules.py
+│       ├── employee_rules.py
+│       ├── equipment_rules.py
+│       ├── material_rules.py
+│       └── vendor_rules.py
+├── generators/
+│   ├── materials_rules.py
+│   ├── equipment_rules.py
+│   └── …  
+├── resources/
+│   ├── address_data.json
+│   ├── communication_records.json
+│   ├── employee_addresses_data.json
+│   ├── equipment_descriptions.json
+│   ├── person_info.json
+│   └── product_descriptions.json
+├── main.py
+└── requirements.txt
+
+
