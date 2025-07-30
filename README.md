@@ -72,16 +72,14 @@ Before you can run the Synthetic Data Generator, make sure you have the followin
 │   ├── equipment.xlsx
 │   ├── material.xlsx
 │   ├── vendor.xlsx
+
+├── generators/
 │   └── custom_rules/
 │       ├── customer_rules.py
 │       ├── employee_rules.py
 │       ├── equipment_rules.py
 │       ├── material_rules.py
 │       └── vendor_rules.py
-├── generators/
-│   ├── materials_rules.py
-│   ├── equipment_rules.py
-│   └── …  
 ├── resources/
 │   ├── address_data.json
 │   ├── communication_records.json
