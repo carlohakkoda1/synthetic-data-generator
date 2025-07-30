@@ -107,7 +107,7 @@ Follow these steps to get the Synthetic Data Generator up and running:
    source .venv/bin/activate     # macOS/Linux
    .venv\Scripts\Activate.ps1    # Windows PowerShell
   
-4. **Install dependencies**
+3. **Install dependencies**
   ```
   pip install -r requirements.txt
 
