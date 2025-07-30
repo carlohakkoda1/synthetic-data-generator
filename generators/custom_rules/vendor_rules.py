@@ -1,3 +1,8 @@
+"""
+Custom rules and utilities for synthetic vendor data generation.
+Includes address handling, supplier/bank/tax code logic, parent-child lookups, and foreign key management.
+"""
+
 import os
 import json
 import random
@@ -12,19 +17,20 @@ from core.foreign_key_util import get_foreign_values
 fake = Faker()
 fake_ca = Faker("en_CA")
 
-# === CONSTANTS ===
+# === CONSTANTS AND RESOURCES ===
 _LIFNR_COUNTER = 0  # Global counter for LIFNRs (YN01)
 RESOURCE_PATH = os.path.join(os.path.dirname(__file__), "../resources/address_data.json")
 
-# === LOAD ADDRESS POOL ===
 with open(RESOURCE_PATH, "r") as f:
     ADDRESS_POOL = json.load(f)
 
-# --- CACHE para acceso rápido por STREET ---
+# Fast street/address lookups
 STREET_LOOKUP = {addr["STREET"]: addr for addr in ADDRESS_POOL}
 
-# --- CACHE para lookups de parent (tabla, columna clave) ---
+# --- CACHE for parent lookups ---
 _lookup_cache = {}
+
+# === SUPPLIER RULES ===
 
 def supplier_code(name: str) -> str:
     """Generates a supplier code using the name and random digits."""
@@ -38,17 +44,17 @@ def copy_value(source_value):
 
 def random_code() -> str:
     """Returns a random code, only 'YNO1' currently."""
-    return random.choice(["YNO1"])
+    return "YNO1"
 
 def get_random_partner_function() -> str:
     """Returns a random partner function code."""
     return random.choice(["RS", "WL", "LF", "BA"])
 
 def default(value):
-    """Returns the value as is."""
+    """Returns the value as is (default passthrough)."""
     return value
 
-# === ADDRESS RELATED (Optimized) ===
+# === ADDRESS RULES ===
 
 def get_street():
     """Returns a random street from address pool."""
@@ -77,7 +83,9 @@ def get_langu_corr(street):
 # === SUPPLIER NAME-BASED ===
 
 def supplier_id_from_name(name: str) -> str:
-    """Generates a supplier ID from a name, with some randomness."""
+    """
+    Generates a supplier ID from a name, with some randomness.
+    """
     if not name:
         return ""
     clean_name = re.sub(r'[^A-Z0-9]', '', name.upper())
@@ -90,7 +98,7 @@ def supplier_id_from_name(name: str) -> str:
     )
     return f"{prefix}{suffix}"[:20]
 
-# === PERSONA Y EMAIL ===
+# === PERSON AND EMAIL ===
 
 def optional_first_name():
     """Randomly returns a first name or None."""
@@ -113,7 +121,7 @@ def phone_by_country(country):
         return None
 
 def clean_string(s):
-    """Cleans a string for email use."""
+    """Cleans a string for email use (alphanumeric, lowercased)."""
     return re.sub(r'[^a-zA-Z0-9]', '', s or "").lower()
 
 def email_from_name_company(company=None, first_name=None, last_name=None):
@@ -134,11 +142,11 @@ def email_from_name_company(company=None, first_name=None, last_name=None):
     domain_part = f"{company}.com" if company else fake.free_email_domain()
     return f"{user_part}@{domain_part}"
 
-# === LOOKUPS (PARENT/CHILD DATA, OPTIMIZED) ===
+# === LOOKUPS (Parent/Child Data) ===
 
 def get_lookup_map(table_name, fk_column_name, domain="vendor"):
     """
-    Crea y cachea un dict: {fk_value: row_dict} para accesso O(1).
+    Builds and caches a lookup: {fk_value: row_dict} for O(1) parent access.
     """
     key = f"{domain}.{table_name}.{fk_column_name}"
     if key not in _lookup_cache:
@@ -148,13 +156,13 @@ def get_lookup_map(table_name, fk_column_name, domain="vendor"):
             _lookup_cache[key] = {}
             return _lookup_cache[key]
         df = pd.read_csv(path)
-        # OJO: Puede haber duplicados, siempre toma la PRIMERA aparición
+        # Always take the first appearance if duplicates
         _lookup_cache[key] = {row[fk_column_name]: row for _, row in df.iterrows()}
     return _lookup_cache[key]
 
 def lookup_parent_value(table_name: str, fk_column_name, look_up_column, source_value, domain="vendor"):
     """
-    Usar un dict en memoria para acceso O(1).
+    O(1) access to a parent row's lookup value, using an in-memory dict.
     """
     lookup_map = get_lookup_map(table_name, fk_column_name, domain)
     row = lookup_map.get(source_value)
@@ -163,41 +171,48 @@ def lookup_parent_value(table_name: str, fk_column_name, look_up_column, source_
     else:
         return None
 
-# === BUSINESS RULES (COMPANY, BANK, TAX, ETC) ===
+# === BUSINESS RULES (Company, Bank, Tax, etc) ===
 
 def get_company_code(table_name: str, fk_column_name, look_up_column, source_value, domain="vendor"):
+    """Returns the company code based on parent value."""
     value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value, domain)
     return 1704 if value == 'USA' else 2910
 
 def get_purchasing_org(table_name: str, fk_column_name, look_up_column, source_value, domain="vendor"):
+    """Returns the purchasing org code based on parent value."""
     value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value, domain)
     return "US01" if value == 'USA' else "CAO1"
 
 def get_bank_country(table_name: str, fk_column_name, look_up_column, source_value, domain="vendor"):
+    """Returns the bank country code based on parent value."""
     value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value, domain)
     return "US" if value == 'USA' else "CA"
 
 def get_account_number(table_name: str, fk_column_name, look_up_column, source_value, domain="vendor"):
+    """Returns a synthetic account number based on parent country."""
     value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value, domain)
     return fake.bban() if value == 'USA' else fake_ca.bban()
 
 def get_iban_number(table_name: str, fk_column_name, look_up_column, source_value, domain="vendor"):
+    """Returns a synthetic IBAN number based on parent country."""
     value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value, domain)
     return fake.iban() if value == 'USA' else fake_ca.iban()
 
 def get_currency(table_name: str, fk_column_name, look_up_column, source_value, domain="vendor"):
+    """Returns currency code based on parent country."""
     value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value, domain)
     return 'USD' if value == 'USA' else 'CAD'
 
 def get_reconciliation_account(table_name: str, fk_column_name, look_up_column, source_value, domain="vendor"):
+    """Returns reconciliation account based on parent country."""
     value = lookup_parent_value(table_name, fk_column_name, look_up_column, source_value, domain)
     return 21100000 if value == 'USA' else 21300000
 
 def generate_bank_key(country_bank):
-    """Returns a random BANKL (Bank Key) for USA or CANADA."""
+    """Returns a random bank key for USA or CANADA."""
     usa_bank_keys = ["021000021", "026009593", "121000248", "021000089", "091000022"]
     canada_bank_keys = ["0001004", "0040012", "0020020", "0010005", "0100063"]
-    country_bank = country_bank.strip().upper()
+    country_bank = (country_bank or "").strip().upper()
     if country_bank == "US":
         return random.choice(usa_bank_keys)
     elif country_bank == "CA":
@@ -206,10 +221,10 @@ def generate_bank_key(country_bank):
         return None
 
 def generate_bkont(country_bank):
-    """Returns a random BKONT (Bank Control Key) for USA or CANADA."""
+    """Returns a random bank control key for USA or CANADA."""
     usa_bkont_values = ["01", "02", "03"]  # Checking, Savings, Loan
     canada_bkont_values = ["01", "02", "03", "04", "05"]
-    country_bank = country_bank.strip().upper()
+    country_bank = (country_bank or "").strip().upper()
     if country_bank == "US":
         return random.choice(usa_bkont_values)
     elif country_bank == "CA":
@@ -218,8 +233,8 @@ def generate_bkont(country_bank):
         return None
 
 def generate_bkref(country_bank):
-    """Returns a random BKREF (Bank Reference) for USA or CANADA."""
-    country_bank = country_bank.strip().upper()
+    """Returns a random bank reference for USA or CANADA."""
+    country_bank = (country_bank or "").strip().upper()
     if country_bank == "US":
         return f"REF-{''.join(random.choices(string.digits, k=6))}"
     elif country_bank == "CA":
@@ -228,7 +243,7 @@ def generate_bkref(country_bank):
         return None
 
 def random_tax_type(ctx=None):
-    """Randomly assigns a Tax Type (SAP field)."""
+    """Randomly assigns a tax type (SAP field)."""
     return random.choice(['X', ''])
 
 def generate_tax_number():
@@ -245,10 +260,10 @@ def generate_tax_number():
     else:
         return None
 
+# === LIFNR (Vendor Number) and Foreign Key Handling ===
 
 vendor_number_set = set()
 vendor_number_fk_sddr_usage = set()
-
 
 def generate_lifnr_yn01() -> str:
     """Sequentially generates LIFNR values in range 300000000 - 399999999."""
@@ -263,33 +278,42 @@ def generate_lifnr_yn01() -> str:
     if vendor_number not in vendor_number_set:
         vendor_number_set.add(vendor_number)
         return vendor_number
-
-    return str(lifnr).zfill(9)
-
+    return vendor_number
 
 def fk_copy():
+    """
+    Returns a vendor number from vendor_number_set not yet used in vendor_number_fk_sddr_usage.
+    """
     for vendor_id in vendor_number_set:
         if vendor_id not in vendor_number_fk_sddr_usage:
             vendor_number_fk_sddr_usage.add(vendor_id)
             return vendor_id
 
-
 def generate_dic(column_name, value):
+    """Utility: builds a dictionary with one column/value."""
     return {column_name: value}
 
+# === Foreign Key Distribution (for test data relationships) ===
 
-_pk_cache = defaultdict(list)     
-_pk_generator = defaultdict(list)    # Trackea cuántas veces se ha usado cada valor
+_pk_cache = defaultdict(list)
+_pk_generator = defaultdict(list)    # Tracks how many times each value has been used
 _row_generator_cache = {}
 
-
 OUTPUT_DIR = "output"
-DOMAIN = "vendor"  # o el que corresponda a ese archivo de reglas
-
+DOMAIN = "vendor"  # Or as appropriate for this rule set
 
 def foreign_key(table_name, column_name, row_nums=None):
-    row_num = row_nums
+    """
+    Returns a foreign key value for use in generated test data, balancing usage.
 
+    Args:
+        table_name (str): The referenced table.
+        column_name (str): The referenced column.
+        row_nums (int, optional): The current row index.
+    Returns:
+        str: The chosen foreign key value.
+    """
+    row_num = row_nums
     key = f"{table_name}.{column_name}"
 
     if key not in _pk_cache:
@@ -297,7 +321,7 @@ def foreign_key(table_name, column_name, row_nums=None):
         _pk_cache[key] = get_foreign_values(target_path, column_name)
 
     if not _pk_cache[key]:
-        print(f"[⚠️ WARNING] No hay valores en _pk_cache para {key}")
+        print(f"[⚠️ WARNING] No values in _pk_cache for {key}")
         return ""
 
     attempts = 0
@@ -313,13 +337,12 @@ def foreign_key(table_name, column_name, row_nums=None):
             return value
         attempts += 1
 
-    # ♻️ Reset contador y vuelve a intentar
-    print(f"[♻️ RESET] Reiniciando contador para {key}")
+    # Reset counter and try again
     keys_to_reset = [k for k in _pk_generator if k.startswith(f"{key}.")]
     for k in keys_to_reset:
         del _pk_generator[k]
 
-    # Ahora elegir un nuevo valor limpio
+    # Now choose a fresh value
     value = str(random.choice(_pk_cache[key]))
     _pk_generator[f"{key}.{value}"].append(value)
     _row_generator_cache[row_num] = generate_dic(column_name, value)

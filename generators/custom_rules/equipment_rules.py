@@ -1,3 +1,13 @@
+"""
+Rule functions for equipment synthetic data generation.
+
+Includes:
+- Material and equipment number generation (unique)
+- Lookups and cached access to equipment attributes
+- Date, serial, and random value generators
+- Foreign key helpers for equipment relationships
+"""
+
 import os
 import json
 import random
@@ -9,7 +19,7 @@ from core.foreign_key_util import get_foreign_values
 fake = Faker()
 
 def default(value):
-    """Returns the provided value as is."""
+    """Returns the provided value as is (passthrough)."""
     return value
 
 # === LOAD RESOURCES ===
@@ -23,25 +33,53 @@ with open(RESOURCE_PATH, "r") as f:
 # --- OPTIMIZED LOOKUP FOR MATERIAL_NUMBER ---
 MATERIAL_LOOKUP = {equip["Material Number"]: equip for equip in EQUIPMENT_POOL}
 
+# === Unique number tracking ===
+material_number_set = set()
+equipment_number_set = set()
+fk_equipment_number_set = set()
+product_number_set = set()
+
+PATTERN_LETTERS = ['N', 'S', 'K', 'E', 'W', 'R', 'P', 'T', 'L']
+
 # === GENERATORS ===
 
-material_number_set = set()
+def generate_product_number(letter=None, store_in_dict=False):
+    """
+    Generates a unique product number with a pattern letter.
+    """
+    while True:
+        l = letter if letter else random.choice(PATTERN_LETTERS)
+        if l not in PATTERN_LETTERS:
+            raise ValueError(f"Invalid letter '{l}'. Must be one of {PATTERN_LETTERS}.")
+        first_three = random.randint(0, 999)
+        last_five = random.randint(0, 99999)
+        product_number = f"{first_three:03d}{l}{last_five:05d}"
+        if product_number not in product_number_set:
+            product_number_set.add(product_number)
+            return product_number
 
 def get_material_number():
-    """Returns a random material number from the equipment pool."""
+    """
+    Returns a unique product number for use as a material number.
+    """
     return generate_product_number()
 
-
 def get_equipment_description(material_number):
-    """Returns description by material_number in O(1) time."""
+    """
+    Returns the description for a material number, if found, else empty string.
+    """
     return MATERIAL_LOOKUP.get(material_number, {}).get("Description", "")
 
 def get_equipment_weight(material_number):
-    """Returns weight by material_number in O(1) time."""
+    """
+    Returns the weight for a material number, if found, else empty string.
+    """
     return MATERIAL_LOOKUP.get(material_number, {}).get("Weight", "")
 
 def random_date_between(start_date: str, end_date: str):
-    """Generates a random date between two dates (YYYY-MM-DD format)."""
+    """
+    Generates a random date between two dates (YYYY-MM-DD format).
+    """
     try:
         start_dt = datetime.strptime(start_date, "%Y-%m-%d").date()
         end_dt = datetime.strptime(end_date, "%Y-%m-%d").date()
@@ -51,7 +89,9 @@ def random_date_between(start_date: str, end_date: str):
         return None
 
 def get_random_serial_number():
-    """Generates a random serial number following one of several patterns."""
+    """
+    Generates a random serial number following one of several patterns.
+    """
     patterns = [
         "???########",        # HQH826037
         "##???########",      # 08J120801117
@@ -61,11 +101,10 @@ def get_random_serial_number():
     pattern = random.choice(patterns)
     return fake.bothify(pattern).upper()
 
-
-equipment_number_set = set()
-
 def equipment_number():
-    """Generates a random equipment number in different formats."""
+    """
+    Generates a unique equipment number following different patterns.
+    """
     patterns = [
         "???#####",         # EQ36198, A6330
         "#####-?",          # 48767-E
@@ -76,38 +115,36 @@ def equipment_number():
     ]
     while True:
         pattern = random.choice(patterns)
-        equipment_number = fake.bothify(pattern).upper()
-        if equipment_number not in equipment_number_set:
-            equipment_number_set.add(equipment_number)
-            return equipment_number
-
+        eq_num = fake.bothify(pattern).upper()
+        if eq_num not in equipment_number_set:
+            equipment_number_set.add(eq_num)
+            return eq_num
 
 def generate_dic(column_name, value):
+    """Builds a dictionary with one key/value pair."""
     return {column_name: value}
 
-
-_pk_cache = defaultdict(list)     
-_pk_generator = defaultdict(list)    # Trackea cuántas veces se ha usado cada valor
-_row_generator_cache = {}
-
+# === Foreign Key Management ===
 
 OUTPUT_DIR = "output"
-DOMAIN = "equipment"  # o el que corresponda a ese archivo de reglas
+DOMAIN = "equipment"
 
+_pk_cache = defaultdict(list)     
+_pk_generator = defaultdict(list)    # Tracks value usage count
+_row_generator_cache = {}
 
 def foreign_key(table_name, column_name, row_nums=None):
+    """
+    Returns a foreign key value for use in generated test data, balancing usage.
+    """
     row_num = row_nums
-
     key = f"{table_name}.{column_name}"
-
     if key not in _pk_cache:
         target_path = os.path.join(OUTPUT_DIR, DOMAIN, f"{table_name}.csv")
         _pk_cache[key] = get_foreign_values(target_path, column_name)
-
     if not _pk_cache[key]:
-        print(f"[⚠️ WARNING] No hay valores en _pk_cache para {key}")
+        print(f"[⚠️ WARNING] No values in _pk_cache for {key}")
         return ""
-
     attempts = 0
     max_attempts = len(_pk_cache[key]) * 2
     while attempts < max_attempts:
@@ -120,58 +157,22 @@ def foreign_key(table_name, column_name, row_nums=None):
             row_num += 1 
             return value
         attempts += 1
-
-    # ♻️ Reset contador y vuelve a intentar
-    print(f"[♻️ RESET] Reiniciando contador para {key}")
+    # ♻️ Reset counter and try again
+    print(f"[♻️ RESET] Resetting counter for {key}")
     keys_to_reset = [k for k in _pk_generator if k.startswith(f"{key}.")]
     for k in keys_to_reset:
         del _pk_generator[k]
-
-    # Ahora elegir un nuevo valor limpio
     value = str(random.choice(_pk_cache[key]))
     _pk_generator[f"{key}.{value}"].append(value)
     _row_generator_cache[row_num] = generate_dic(column_name, value)
     row_num += 1  
     return value
 
-
-fk_equipment_number_set = set()
-
 def fk_copy():
-
-        for equipment_id in equipment_number_set:
-            if equipment_id not in fk_equipment_number_set:
-                fk_equipment_number_set.add(equipment_id)
-                return equipment_id
-            
-
-PATTERN_LETTERS = ['N', 'S', 'K', 'E', 'W', 'R', 'P', 'T', 'L']
-
-product_number_set = set()
-
-
-def generate_product_number(letter=None, store_in_dict=False):
     """
-    Generates a unique product number and stores it in a set/dict for uniqueness validation.
-    If the generated product number already exists, keep generating until unique.
-
-    :param letter: Optional; choose from PATTERN_LETTERS or random.
-    :param store_in_dict: If True, store in dict with extra info; otherwise, just in set.
-    :return: Unique product number string.
+    Returns an equipment number not yet used in fk_equipment_number_set.
     """
-    while True:
-        if letter is None:
-            l = random.choice(PATTERN_LETTERS)
-        else:
-            l = letter
-            if l not in PATTERN_LETTERS:
-                raise ValueError(f"Invalid letter '{l}'. Must be one of {PATTERN_LETTERS}.")
-
-        first_three = random.randint(0, 999)
-        last_five = random.randint(0, 99999)
-        product_number = f"{first_three:03d}{l}{last_five:05d}"
-
-        if product_number not in product_number_set:
-            product_number_set.add(product_number)
-            return product_number
-        # Else, loop again to get a new product number
+    for equipment_id in equipment_number_set:
+        if equipment_id not in fk_equipment_number_set:
+            fk_equipment_number_set.add(equipment_id)
+            return equipment_id
