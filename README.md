@@ -92,4 +92,12 @@ Before you can run the Synthetic Data Generator, make sure you have the followin
 ├── main.py
 └── requirements.txt
 ```
+## 4. Installation
+
+Follow these steps to get the Synthetic Data Generator up and running:
+
+1. **Clone the repository**  
+   ```bash
+   git clone https://github.com/your-org/synthetic-data-generator.git
+   cd synthetic-data-generator
 
