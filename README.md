@@ -111,3 +111,11 @@ Follow these steps to get the Synthetic Data Generator up and running:
 4. **Test**
     ```
     python3 main.py
+
+
+| Column      | Description                                                              |
+| ----------- | ------------------------------------------------------------------------ |
+| table\_name | Name of the table to generate (must match the sheet/definition filename) |
+| rows        | Default number of rows to generate (overridden by `--count` if provided) |
+| order       | Execution order; lower values run first                                  |
+
