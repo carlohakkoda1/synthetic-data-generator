@@ -113,9 +113,37 @@ Follow these steps to get the Synthetic Data Generator up and running:
     python3 main.py
 
 
-| Column      | Description                                                              |
-| ----------- | ------------------------------------------------------------------------ |
-| table\_name | Name of the table to generate (must match the sheet/definition filename) |
-| rows        | Default number of rows to generate (overridden by `--count` if provided) |
-| order       | Execution order; lower values run first                                  |
+
+## 6. Configuration
+
+The generator’s behavior can be tailored via Excel config files, domain definitions, CLI flags, or environment variables.
+
+### 6.1 Config Files
+
+#### Table Config (`config/table_config.xlsx`)
+
+| Column     | Description                                                                            |
+| ---------- | -------------------------------------------------------------------------------------- |
+| `table_name` | Name of the table to generate (must match the sheet/definition filename)            |
+| `rows`       | Default number of rows to generate (overridden by `--count` if provided)            |
+| `order`      | Execution order; lower values run first                                               |
+
+#### Domain Definitions (`definitions/<domain>.xlsx`)
+
+Each domain (materials, equipment, vendor, customer, employee) has its own Excel file. Each sheet should include:
+
+| Column         | Description                                                      |
+| -------------- | ---------------------------------------------------------------- |
+| `column_name`  | Name of the target CSV column                                    |
+| `rule_name`    | Name of the generator function to apply (in `generators/`)       |
+| `description`  | Human-readable explanation of the field’s content or logic       |
+
+#### Resource Pools (`resources/*.json`)
+
+JSON files providing lookup data for fake values, e.g.:
+
+- `address_data.json`  
+- `person_info.json`  
+- `product_descriptions.json`  
+- …etc.
 
