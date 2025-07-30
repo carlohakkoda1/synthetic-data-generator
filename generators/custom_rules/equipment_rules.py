@@ -4,7 +4,7 @@ import random
 from faker import Faker
 from datetime import datetime
 from collections import defaultdict
-from utils.foreign_key_util import get_foreign_values
+from core.foreign_key_util import get_foreign_values
 
 fake = Faker()
 

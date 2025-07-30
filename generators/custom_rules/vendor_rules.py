@@ -6,7 +6,7 @@ import string
 from faker import Faker
 import pandas as pd
 from collections import defaultdict
-from utils.foreign_key_util import get_foreign_values
+from core.foreign_key_util import get_foreign_values
 
 # === FAKER INSTANCES ===
 fake = Faker()

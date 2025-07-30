@@ -5,7 +5,7 @@ from datetime import datetime
 import pandas as pd
 import numpy as np
 import json
-from utils.foreign_key_util import get_foreign_values
+from core.foreign_key_util import get_foreign_values
 
 
 PATTERN_LETTERS = ['N', 'S', 'K', 'E', 'W', 'R', 'P', 'T', 'L']

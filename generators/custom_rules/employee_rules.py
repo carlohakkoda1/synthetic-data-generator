@@ -5,7 +5,7 @@ import pandas as pd
 from faker import Faker
 from datetime import datetime, timedelta
 from collections import defaultdict
-from utils.foreign_key_util import get_foreign_values
+from core.foreign_key_util import get_foreign_values
 
 OUTPUT_DIR = "output"
 DOMAIN = "employee"

@@ -31,7 +31,7 @@ import pytz
 from faker import Faker
 
 # Local imports
-from utils.foreign_key_util import get_foreign_values
+from core.foreign_key_util import get_foreign_values
 
 __all__ = [
     # Generators

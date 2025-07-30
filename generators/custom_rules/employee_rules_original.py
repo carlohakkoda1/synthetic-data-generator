@@ -1,6 +1,6 @@
 import os
 import random
-from utils.foreign_key_util import get_foreign_values
+from core.foreign_key_util import get_foreign_values
 from datetime import datetime, timedelta
 import pandas as pd
 import json
