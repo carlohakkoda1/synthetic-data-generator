@@ -1,3 +1,7 @@
+"""
+Utility for loading and caching foreign key values from CSV files.
+"""
+
 import pandas as pd
 import os
 from collections import defaultdict
@@ -17,6 +21,7 @@ def get_foreign_values(csv_path, column_name):
         list: List of unique, non-null values from the column.
     """
     key = f"{csv_path}.{column_name}"
+    # If not already cached, attempt to load and cache the column's values
     if key not in _foreign_key_cache:
         try:
             if not os.path.isfile(csv_path):
@@ -24,8 +29,9 @@ def get_foreign_values(csv_path, column_name):
                 return []
             df = pd.read_csv(csv_path)
             if column_name not in df.columns:
-                print(f"[⚠️ WARNING] Column '{column_name}' not in {csv_path}")
+                print(f"[⚠️ WARNING] Column '{column_name}' not found in {csv_path}")
                 return []
+            # Cache unique, non-null values for this file/column
             _foreign_key_cache[key] = df[column_name].dropna().unique().tolist()
         except Exception as e:
             print(f"[⚠️ ERROR loading foreign key] {key}: {e}")
