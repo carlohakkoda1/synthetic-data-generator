@@ -108,6 +108,6 @@ Follow these steps to get the Synthetic Data Generator up and running:
 3. **Install dependencies**
    ```
     pip install -r requirements.txt
-4.**Test**
-  ```
-  python3 main.py
+4. **Test**
+    ```
+    python3 main.py
