@@ -111,8 +111,16 @@ Follow these steps to get the Synthetic Data Generator up and running:
 4. **Test**
     ```
     python3 main.py
+## 5. Usage
 
+You can generate synthetic data either via the command-line interface (CLI) or by using the Python API.
 
+### 5.1 Command-Line Interface
+
+Run the built-in help to see all available options:
+  ```
+  python main.py --help
+  ```
 
 ## 6. Configuration
 
