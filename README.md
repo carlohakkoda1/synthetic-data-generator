@@ -55,6 +55,7 @@ Before you can run the Synthetic Data Generator, make sure you have the followin
 3. **Project Files & Folders**  
    Ensure your project root contains the following structure and files:
 
+```
 .
 ├── config/
 │   ├── table_config.xlsx
@@ -90,5 +91,5 @@ Before you can run the Synthetic Data Generator, make sure you have the followin
 │   └── product_descriptions.json
 ├── main.py
 └── requirements.txt
-
+```
 
