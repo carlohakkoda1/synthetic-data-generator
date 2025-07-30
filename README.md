@@ -100,17 +100,14 @@ Follow these steps to get the Synthetic Data Generator up and running:
    ```bash
    git clone https://github.com/your-org/synthetic-data-generator.git
    cd synthetic-data-generator
-
 2. **Create & activate a virtual environment**
    ```
    python3 -m venv .venv
    source .venv/bin/activate     # macOS/Linux
    .venv\Scripts\Activate.ps1    # Windows PowerShell
-  
 3. **Install dependencies**
    ```
     pip install -r requirements.txt
-
 4.**Test**
-    ```
-    python3 main.py
+  ```
+  python3 main.py
