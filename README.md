@@ -108,6 +108,8 @@ Follow these steps to get the Synthetic Data Generator up and running:
    .venv\Scripts\Activate.ps1    # Windows PowerShell
   
 3. **Install dependencies**
+   ```
+    pip install -r requirements.txt
+4.**Test**
   ```
-  pip install -r requirements.txt
-
+  python3 main.py
