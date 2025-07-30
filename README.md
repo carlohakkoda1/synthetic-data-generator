@@ -133,7 +133,7 @@ The generator’s behavior can be tailored via Excel config files, domain defini
 | Column     | Description                                                                            |
 | ---------- | -------------------------------------------------------------------------------------- |
 | `table_name` | Name of the table to generate (must match the sheet/definition filename)            |
-| `rows`       | Default number of rows to generate (overridden by `--count` if provided)            |
+| `rows`       | Default number of rows to generate          |
 | `order`      | Execution order; lower values run first                                               |
 
 #### Domain Definitions (`definitions/<domain>.xlsx`)
