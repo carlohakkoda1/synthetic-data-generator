@@ -313,7 +313,7 @@ def assign_random_mrp_controller():
     ])
 
 
-def assing_country_origin(source_value):
+def assign_country_origin(source_value):
     if source_value == 'US32':
         return 'US'
     else:
