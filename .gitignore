@@ -1,1 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.class
+
+# Entornos virtuales
+.venv/
+venv/
+env/
+ENV/
+
+# Paquetes / build
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Credenciales / secretos
+*.env
+
+# Otros (ajusta según tu caso)
 output/
