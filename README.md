@@ -117,7 +117,7 @@ You can generate synthetic data either via the command-line interface (CLI) or b
 
 Run the built-in help to see all available options:
   ```
-  python main.py --help
+  python3 main.py
   ```
 
 ## 6. Configuration
